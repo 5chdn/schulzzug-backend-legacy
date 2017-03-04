@@ -2,7 +2,8 @@
 
 var	express = require('express'),
 	bodyParser = require('body-parser'),
-	randtoken = require('rand-token');
+	randtoken = require('rand-token'),
+	MongoClient = require('mongodb').MongoClient;
 
 var app = express();
 
