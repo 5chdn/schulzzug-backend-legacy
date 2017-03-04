@@ -7,12 +7,34 @@ var	express = require('express'),
 
 var app = express();
 
+app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
-app.get('/register', function(req, res) {
-	let answer = {
+app.get('/', function(req, res) {
+	res.sendFile(__dirname + '/www/index.html');
+});
+
+app.post('/register', function(req, res) {
+	let user = req.body.user
+
+	var answer = {
+		user: user,
 		token: randtoken.generate(16)
 	}
+
+	var mongodbHost = process.env.database || "localhost";
+	MongoClient.connect("mongodb://" + mongodbHost + ":27017/spdhack", function(err, connection) {
+		let collection = connection.collection('users');
+		let insertData = {
+			username: answer.user,
+			token: answer.token
+		};
+
+		collection.insert(insertData, {safe: true}, function(err, data) {
+    		console.log("done!");
+    	});
+	});	
+
 	res.send(answer);
 });
 
