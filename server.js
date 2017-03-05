@@ -184,6 +184,9 @@ app.get('/me/scores', function(req, res) {
 		collection.findOne({"username": data.username}, options, function(err, answer) {
 			console.log("ANSWER: " + JSON.stringify(answer))
 			res.send(answer);
+			generateConfig(function(data) {
+   				eventHandler.emit('config', data);
+   			});
 		});
 	});
 });
