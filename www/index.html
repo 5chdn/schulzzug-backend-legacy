@@ -6,6 +6,7 @@
 		<!-- Latest compiled and minified JavaScript -->
 		<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
 		<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/1.7.3/socket.io.js"></script>
 		<script>
 			function save() {
 				alert("Done!");
@@ -19,10 +20,16 @@
 
 			$(document).ready(function() {
 				$.get("http://localhost:8080/configs", function(data) {
-					var config = JSON.parse(data);
-					$('#distance').val(config.score);
-					$('#user').val(config.user);
-					$('#session').val(config.session);
+					$('#distance').val(data.score);
+					$('#user').val(data.user);
+					$('#session').val(data.session);
+				});
+
+				var socket = io.connect(':8081');
+				socket.on('config', function(data) {
+					$('#distance').val(data.score);
+					$('#user').val(data.user);
+					$('#session').val(data.session);
 				});
 			});
 		</script>

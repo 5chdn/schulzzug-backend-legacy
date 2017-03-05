@@ -4,9 +4,23 @@ var	express = require('express'),
 	bodyParser = require('body-parser'),
 	randtoken = require('rand-token'),
 	MongoClient = require('mongodb').MongoClient,
-	Twitter = require('twitter');
+	Twitter = require('twitter'),
+	EventEmitter = require('events'),
+	io = require('socket.io')();
 
 var mongodbHost = process.env.database || "localhost";
+
+class EventHandler extends EventEmitter {}
+const eventHandler = new EventHandler();
+
+io.on('connection', function(socketClient){
+	console.log("Client found!")
+	eventHandler.on('config', function(data) {
+		console.log("EVENT: " +  JSON.stringify(data));
+		socketClient.emit('config', data);
+	});
+});
+io.listen(8081);
 
 var app = express();
 MongoClient.connect("mongodb://" + mongodbHost + ":27017/spdhack", function(err, connection) {
@@ -88,6 +102,17 @@ function countSession(callback) {
 	});
 }
 
+function generateConfig(callback) {
+	let collection = app.database.collection('scores');
+	getScore(function(score) {
+		countUser(function(user) {
+			countSession(function(session) {
+				callback({score: score, user: user, session: session});
+			});
+		});
+	});
+}
+
 app.put('/me/scores', function(req, res) {
 	let score = req.body.score,
 		token = req.body.token,
@@ -124,13 +149,8 @@ app.get('/scores', function(req, res) {
 });
 
 app.get('/configs', function(req, res) {
-	let collection = app.database.collection('scores');
-	getScore(function(score) {
-		countUser(function(user) {
-			countSession(function(session) {
-				res.send(JSON.stringify({score: score, user: user, session: session}))
-			});
-		});
+	generateConfig(function(data) {
+		res.send(data);
 	});
 });
 
@@ -182,6 +202,10 @@ app.post('/me/starts', function(req, res) {
    		console.log("done!");
    		delete insertData._id;
    		res.send(insertData);
+
+   		generateConfig(function(data) {
+   			eventHandler.emit('config', data);
+   		});
    	});	
 });
 
