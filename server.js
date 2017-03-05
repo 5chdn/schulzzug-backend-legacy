@@ -129,6 +129,9 @@ app.put('/me/scores', function(req, res) {
 		let collection = app.database.collection('scores');
 		collection.insert(insertData, {safe: true}, function(err, data) {
 	    	res.send(data);
+	    	generateConfig(function(data) {
+   				eventHandler.emit('config', data);
+   			});
 	    });
 
 	    let sessionCollecton = app.database.collection('sessions');
