@@ -142,11 +142,11 @@ app.put('/me/scores', function(req, res) {
 app.get('/scores', function(req, res) {
 	let options = {
 		"sort": [["score", "desc"]],
-		"limit": 1
+		"limit": 5
 	};
 
 	let collection = app.database.collection('scores');
-	collection.findOne({}, options, function(err, answer) {
+	collection.find({}, options).toArray(function(err, answer) {
 		res.send(answer);
 	});
 });
