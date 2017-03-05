@@ -3,7 +3,8 @@
 var	express = require('express'),
 	bodyParser = require('body-parser'),
 	randtoken = require('rand-token'),
-	MongoClient = require('mongodb').MongoClient;
+	MongoClient = require('mongodb').MongoClient,
+	Twitter = require('twitter');
 
 var mongodbHost = process.env.database || "localhost";
 
@@ -12,11 +13,22 @@ MongoClient.connect("mongodb://" + mongodbHost + ":27017/spdhack", function(err,
 	app.database = connection;
 });
 
+var client = new Twitter({
+	consumer_key: process.env.ckey,
+	consumer_secret: process.env.csecret,
+	access_token_key: process.env.atkey,
+	access_token_secret: process.env.atsecret
+});
+
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
 app.get('/', function(req, res) {
 	res.sendFile(__dirname + '/www/index.html');
+});
+
+app.get('/logo.png', function(req, res) {
+	res.sendFile(__dirname + '/www/logo.png');
 });
 
 app.post('/register', function(req, res) {
@@ -29,7 +41,7 @@ app.post('/register', function(req, res) {
 		let collection = app.database.collection('users');
 		let insertData = {
 			username: answer.user,
-			token: answer.token
+			token: answer.token,
 		};
 
 		collection.insert(insertData, {safe: true}, function(err, data) {
@@ -39,45 +51,106 @@ app.post('/register', function(req, res) {
 	res.send(answer);
 });
 
-app.put('/score/:user', function(req, res) {
-	let user = req.params.user,
-		score = req.body.score;
+function verifyUser(token, callback) {
+	let collection = app.database.collection('users');
 
-	let insertData = {
-		username: user,
-		score: score
-	};
+	console.log("TOKEN: " + token)
 
-	let collection = app.database.collection('score');
-	collection.insert(insertData, {safe: true}, function(err, data) {
-    	console.log("done!");
-    });
+	collection.findOne({token: token}, function(err, answer) {
+		callback(err, answer);
+	});
+}
 
-	res.send(user);
+function getScore(callback) {
+	let collection = app.database.collection('scores');
+	var score = 0;
+	collection.find({}).toArray(function(err, data) {
+		data.forEach(function(element, index) {
+			score = score + element.score;
+			if(index == data.length - 1) {
+				callback(score);
+			}
+		});
+	});
+}
+
+function countUser(callback) {
+	let collection = app.database.collection('users');
+	collection.count(function(err, data) {
+		callback(data);
+	});
+}
+
+app.put('/me/scores', function(req, res) {
+	let score = req.body.score,
+		token = req.body.token;
+
+	verifyUser(token, function(err, data) {
+		let username = data.username;
+
+		let insertData = {
+			username: username,
+			score: parseInt(score)
+		};
+
+		let collection = app.database.collection('scores');
+		collection.insert(insertData, {safe: true}, function(err, data) {
+	    	res.send(data);
+	    });
+	});
 });
 
-app.get('/score', function(req, res) {
-	let collection = app.database.collection('scores');
+app.get('/scores', function(req, res) {
 	let options = {
 		"sort": [["score", "desc"]],
 		"limit": 1
 	};
 
+	let collection = app.database.collection('scores');
 	collection.findOne({}, options, function(err, answer) {
 		res.send(answer);
 	});
 });
 
-app.get('/score/:user', function(req, res) {
-	var user = req.params.user;
-
+app.get('/configs', function(req, res) {
 	let collection = app.database.collection('scores');
-	let options = {
-		"sort": [["score", "desc"]],
-		"limit": 1
-	};
-	collection.findOne({"username": user}, options, function(err, answer) {
-		res.send(answer);
+	getScore(function(score) {
+		countUser(function(user) {
+			res.send(JSON.stringify({score: score, user: user}))
+		});
+	});
+});
+
+app.get('/twitter', function(req, res) {
+	getScore(function(score) {
+		countUser(function(user) {
+			let tweet = `Seit unserer Abfahrt haben wir bereits ${score} km zurück gelegt und ${user} Passagiere sind auf den Chulzzug aufgesprungen! #SPDHack`;
+			console.log(tweet)
+			client.post('statuses/update', {status: tweet}, function(error, tweet, response) {
+				console.log(response)
+				if (!error) {
+					console.log(tweet);
+				}
+			});
+		});
+	});
+});
+
+app.get('/me/scores', function(req, res) {
+	var token = req.body.token;
+
+	verifyUser(token, function(err, data) {
+		console.log("DATA: " + JSON.stringify(data))
+
+		let collection = app.database.collection('scores');
+		let options = {
+			"sort": [["score", "desc"]],
+			"limit": 1
+		};
+		collection.findOne({"username": data.username}, options, function(err, answer) {
+			console.log("ANSWER: " + JSON.stringify(answer))
+			res.send(answer);
+		});
 	});
 });
 

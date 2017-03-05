@@ -11,6 +11,7 @@ var testUser = {
 var testScore = {
 	_id: 0,
 	username: 'peter',
+	distance: 1,
 	score: 123
 };
 
@@ -20,6 +21,9 @@ MongoClient.connect("mongodb://" + mongodbHost + ":27017/spdhack", function(err,
 
 	var userCollection = db.collection('users');
 	var scoreCollection = db.collection('scores');
+
+	userCollection.remove();
+	scoreCollection.remove();
 
 	var counter = 0;
 	function updateCounter() {

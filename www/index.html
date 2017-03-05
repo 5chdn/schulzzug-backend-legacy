@@ -3,20 +3,69 @@
 		<title>Schulzzug</title>
 		<!-- Latest compiled and minified CSS -->
 		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
-		<!-- Optional theme -->
-		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
 		<!-- Latest compiled and minified JavaScript -->
 		<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
 		<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+		<script>
+			function save() {
+				alert("Done!");
+			}
+
+			function doTwitter() {
+				$.get("http://localhost:8080/twitter", function(data) {
+
+				});
+			}
+
+			$(document).ready(function() {
+				$.get("http://localhost:8080/configs", function(data) {
+					var config = JSON.parse(data);
+					$('#distance').val(config.score);
+					$('#user').val(config.user);
+				});
+			});
+		</script>
 	</head>
 	<body>
 	<div class="row">
 		<div class="col-md-10 col-md-offset-1">
 			<h1>Schulzzug</h1><br>
 			<div class="panel panel-default">
-				<div class="panel-heading">Panel heading without title</div>
+				<div class="panel-heading">Einstellungen</div>
 			 	<div class="panel-body">
+					<form class="form-horizontal">
+						<div class="form-group">
 
+							<!-- Score -->
+							<label for="inputEmail3" class="col-sm-2 control-label">Punkte</label>
+							<div class="col-sm-10">
+								<input type="text" class="form-control" id="distance" disabled>
+							</div>
+
+							<!-- User -->
+							<label for="inputEmail3" class="col-sm-2 control-label">Spieler</label>
+							<div class="col-sm-10">
+								<input type="text" class="form-control" id="user" disabled>
+							</div>
+
+
+							<label for="inputEmail3" class="col-sm-2 control-label">Geschwindigkeit</label>
+							<div class="col-sm-10">
+								<input type="email" class="form-control" id="inputEmail3" placeholder="1.4">
+								<blockquote style="margin-top: 10px">
+									<p>
+										Mit dieser Option wird die Geschwindigkeit des Zuges festgelegt. Der Wert "1" stellt dabei die normale Geschwindigkeit dar.
+									</p>
+								</blockquote>
+							</div>
+						</div>
+						<div class="form-group">
+							<div class="col-sm-offset-2 col-sm-10">
+								<button type="submit" class="btn btn-primary">Speichern</button>
+								<button type="submit" onClick="doTwitter()" class="btn btn-info">Twittern</button>
+							</div>
+						</div>
+					</form>
 			 	</div>
 			</div>
 		</div>
