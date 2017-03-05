@@ -81,9 +81,17 @@ function countUser(callback) {
 	});
 }
 
+function countSession(callback) {
+	let collection = app.database.collection('sessions');
+	collection.count(function(err, data) {
+		callback(data);
+	});
+}
+
 app.put('/me/scores', function(req, res) {
 	let score = req.body.score,
-		token = req.body.token;
+		token = req.body.token,
+		session = req.body.session;
 
 	verifyUser(token, function(err, data) {
 		let username = data.username;
@@ -97,6 +105,9 @@ app.put('/me/scores', function(req, res) {
 		collection.insert(insertData, {safe: true}, function(err, data) {
 	    	res.send(data);
 	    });
+
+	    let sessionCollecton = app.database.collection('sessions');
+	   	sessionCollecton.remove({session: session});
 	});
 });
 
@@ -116,7 +127,9 @@ app.get('/configs', function(req, res) {
 	let collection = app.database.collection('scores');
 	getScore(function(score) {
 		countUser(function(user) {
-			res.send(JSON.stringify({score: score, user: user}))
+			countSession(function(session) {
+				res.send(JSON.stringify({score: score, user: user, session: session}))
+			});
 		});
 	});
 });
@@ -137,7 +150,8 @@ app.get('/twitter', function(req, res) {
 });
 
 app.get('/me/scores', function(req, res) {
-	var token = req.body.token;
+	var token = req.body.token,
+		session = req.body.session;
 
 	verifyUser(token, function(err, data) {
 		console.log("DATA: " + JSON.stringify(data))
@@ -152,6 +166,23 @@ app.get('/me/scores', function(req, res) {
 			res.send(answer);
 		});
 	});
+});
+
+app.post('/me/starts', function(req, res) {
+	let round = randtoken.generate(16),
+		token = req.body.token;
+
+	let collection = app.database.collection('sessions');
+	let insertData = {
+		user: token,
+		session: round
+	};
+
+	collection.insert(insertData, {safe: true}, function(err, data) {
+   		console.log("done!");
+   		delete insertData._id;
+   		res.send(insertData);
+   	});	
 });
 
 app.listen(8080, function(){
